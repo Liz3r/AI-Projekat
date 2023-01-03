@@ -1,16 +1,16 @@
 
 import re
 
-#m i n -> velicna table (n vrste m kolone)
+#m i n -> velicna table
 #na_potezu -> ko je na potezu (X ILI O)
 #xValue -> broj mogucnosti za smestanje plocice na treuntnoj tabli za igraca x
-#xoValue -> broj mogucnosti za smestanje plocice na treuntnoj tabli za igraca o
-# n - vrste
-# m - kolone
+#oValue -> broj mogucnosti za smestanje plocice na treuntnoj tabli za igraca o
+# M - vrste
+# N - kolone
 
 def start_game():
 
-    global m,n,na_potezu,state
+    global m,n,xIgrac,state
     
     pat = re.compile("[0-9][0-9]?")
     inM = input("unesite broj vrsta: ")
@@ -20,7 +20,6 @@ def start_game():
         return False
     m = int(inM)
     n = int(inN)
-    na_potezu = 0
 
     piPat = re.compile("0|1")
     piIn = input("unesite igraca koji je prvi na potezu (0 - covek, 1 - racnar): ")
@@ -28,12 +27,12 @@ def start_game():
     if(not piPat.match(piIn)):
         print("unos nije validan (prvi igra)")
         return False
-    prvi_igra = int(piIn)
+    xIgrac = int(piIn)
 
-    if(m < 5 or n < 5):
+    if(m < 3 or n < 3):
         print("Velicina table ne validna, najmanja tabla je 5x5")
         return False
-    if(prvi_igra != 0 and prvi_igra != 1):
+    if(xIgrac != 0 and xIgrac != 1):
         print("unos nije validan")
         return False
     state = {
@@ -48,13 +47,13 @@ def show_table(state):
     global m,n
     tabla_kolone = "  "
     tabla_ivica = "  "
-    for i in range(0,m):
+    for i in range(0,n):
         tabla_kolone += " " + chr(ord("A")+i)
         tabla_ivica += " ="
     print(tabla_kolone)
     print(tabla_ivica)
 
-    kolNum = n
+    kolNum = m
     for row in reversed(state["matrica"]):
         redStr = str(kolNum)+"||"
         redIspod = "  "
@@ -80,14 +79,14 @@ def show_table(state):
 def is_valid(state,vrsta,kolona):
     global m,n
     if(state["na_potezu"] == 0):
-        if(vrsta < n-1 and vrsta >= 0
-        and kolona < m and kolona >= 0
+        if(vrsta < m-1 and vrsta >= 0
+        and kolona < n and kolona >= 0
         and state["matrica"][vrsta][kolona] == None 
         and state["matrica"][vrsta+1][kolona] == None):
             return True
     else:
-        if(vrsta < n and vrsta >= 0
-        and kolona < m-1 and kolona >= 0
+        if(vrsta < m and vrsta >= 0
+        and kolona < n-1 and kolona >= 0
         and state["matrica"][vrsta][kolona] == None 
         and state["matrica"][vrsta][kolona+1] == None):
             return True
@@ -102,8 +101,8 @@ def racunaj_XOVal(state):
     }
     xVal = 0
     oVal = 0
-    for row in range(0, n):
-        for col in range(0, m):
+    for row in range(0, m):
+        for col in range(0, n):
             stanje_provera["na_potezu"] = 0
             if(is_valid(stanje_provera,row,col)):
                 xVal += 1
@@ -126,7 +125,7 @@ def igraj_potez(state,potez):
     vrsta = int(p[0])-1
     kolona = ord(p[1])-64-1
 
-    if(vrsta < 0 or vrsta > n or kolona < 0 or kolona > m):
+    if(vrsta < 0 or vrsta > m or kolona < 0 or kolona > n):
         return False
     if(state["na_potezu"] == 0):
         #provera validnosti poteza
@@ -176,6 +175,7 @@ def covek_protiv_coveka():
             print("potez nije validan, pokusajte ponovo: ")
         show_table(state)
         print(state["oValue"],state["xValue"])
+        print(proceni_stanje(state))
 ########################################
 
 def novo_stanje(state,vrsta,kolona):
@@ -184,7 +184,8 @@ def novo_stanje(state,vrsta,kolona):
     "xValue": state["xValue"],
     "oValue": state["oValue"],
     "matrica": [x.copy() for x in state["matrica"]],
-    "na_potezu": state["na_potezu"]
+    "na_potezu": state["na_potezu"],
+    "potez": str(vrsta+1) + " " + chr(kolona+65)
     }
     if(vrsta < 0 or vrsta > n or kolona < 0 or kolona > m):
         return False
@@ -225,17 +226,105 @@ def mogucnosti(state):
                 retLista.append(ns)
     return retLista
 
-covek_protiv_coveka()
+def covek_protiv_racunara():
+    global state,xIgrac
+    while(not start_game()):
+        print("Unesite validne vrednosti")
+    show_table(state)
+
+
+
+    while(game_in_progress()):
+        if(state["na_potezu"] == xIgrac):
+            while(not igraj_potez(state,input("unesite potez: "))):
+                print("potez nije validan, pokusajte ponovo: ")
+            show_table(state)
+            print(state["oValue"],state["xValue"])
+        else:
+            
+            #kompjuter igra potez
+            stanj = max_value(state,3,[state,-9999],[state,9999])[0]
+            potez = stanj["potez"]
+            if(not igraj_potez(state,potez)):
+                print("nedozvoljen potez: " + potez)
+                break
+            show_table(state)
+    return True
+
+#racunanje poteza racunara##################################
+
+def proceni_stanje(stanje):
+    global xIgrac
+
+    if(xIgrac):
+        if(stanje["xValue"] == 0):
+            return 999
+        if(stanje["oValue"] == 0):
+            return -999
+        ret = stanje["xValue"] - stanje["oValue"]/6
+    else:
+        if(stanje["oValue"] == 0):
+            return 999
+        if(stanje["xValue"] == 0):
+            return -999
+        ret = stanje["oValue"] - stanje["xValue"]/6
+    return ret
+
+
+
+
+def max_value(stanje,dubina,alpha,beta):
+
+    nova_stanja = mogucnosti(stanje)
+    if(dubina == 0 or len(nova_stanja) == 0):
+        return (stanje,proceni_stanje(stanje))
+    else:
+        for s in nova_stanja:
+            alpha = max(alpha,min_value(s,dubina-1,alpha,beta), key = lambda x: x[1])
+            if(alpha[1] >= beta[1]):
+                return beta
+    return alpha
+
+def min_value(stanje,dubina,alpha,beta):
+
+    nova_stanja = mogucnosti(stanje)
+    if(dubina == 0 or len(nova_stanja) == 0):
+        return (stanje,proceni_stanje(stanje))
+    else:
+        for s in nova_stanja:
+            beta = min(beta,max_value(s,dubina-1,alpha,beta), key = lambda x: x[1])
+            if(beta[1] <= alpha[1]):
+                return alpha
+    return beta
+
+#def min_max(stanje,dubina,alpha,beta):
+    
+
+############################################################
+
+#covek_protiv_coveka()
+covek_protiv_racunara()
+
 
 # start_game()
-# state["matrica"] = [
-#     ["X","X","X",None,None,None],
-#     ["X","X","X","O","O",None],
+# state = {
+#         "xValue": 0,
+#         "oValue": 0,
+#         "matrica": [
+#     ["X","X","X","X","X","X"],
+#     ["X","X","X","O","O","X"],
 #     ["X","X","X",None,"O","O"],
-#     ["X","X","X",None,None,None],
+#     ["X","X","X","X","X",None],
 #     ["X","X","X",None,"O","O"],
 #     ["X","X","X","O","O",None]
-# ]
+# ],
+#         "na_potezu": 0
+#     }
+# global n,m
+# n = 6
+# m = 6
+
+# print(len(mogucnosti(state)))
 # show_table(state)
 # state["na_potezu"] = 0
 # for el in mogucnosti(state):
