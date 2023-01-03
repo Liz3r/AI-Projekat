@@ -112,7 +112,7 @@ def racunaj_XOVal(state):
     return (oVal,xVal)
 
 #odigrava potez
-#oblika (int)(char)
+#oblika (int) (char)
 #ne bavi se time ko mu je prosledio potez, samo proverava validnost
 #i postavlja potez na tablu ako je validan
 def igraj_potez(state,potez):
@@ -172,7 +172,7 @@ def covek_protiv_coveka():
 
     while(game_in_progress()):
         while(not igraj_potez(state,input("unesite potez: "))):
-            print("potez nije validan, pokusajte ponovo: ")
+            print("potez je oblika: 1 A | (int) (veliko slovo)\npotez nije validan, pokusajte ponovo: ")
         show_table(state)
         print(state["oValue"],state["xValue"])
         print(proceni_stanje(state))
@@ -232,12 +232,10 @@ def covek_protiv_racunara():
         print("Unesite validne vrednosti")
     show_table(state)
 
-
-
     while(game_in_progress()):
         if(state["na_potezu"] == xIgrac):
             while(not igraj_potez(state,input("unesite potez: "))):
-                print("potez nije validan, pokusajte ponovo: ")
+                print("potez je oblika: 1 A | (int) (veliko slovo)\npotez nije validan, pokusajte ponovo: ")
             show_table(state)
             print(state["oValue"],state["xValue"])
         else:
@@ -297,35 +295,8 @@ def min_value(stanje,dubina,alpha,beta):
                 return alpha
     return beta
 
-#def min_max(stanje,dubina,alpha,beta):
-    
-
 ############################################################
 
 #covek_protiv_coveka()
 covek_protiv_racunara()
 
-
-# start_game()
-# state = {
-#         "xValue": 0,
-#         "oValue": 0,
-#         "matrica": [
-#     ["X","X","X","X","X","X"],
-#     ["X","X","X","O","O","X"],
-#     ["X","X","X",None,"O","O"],
-#     ["X","X","X","X","X",None],
-#     ["X","X","X",None,"O","O"],
-#     ["X","X","X","O","O",None]
-# ],
-#         "na_potezu": 0
-#     }
-# global n,m
-# n = 6
-# m = 6
-
-# print(len(mogucnosti(state)))
-# show_table(state)
-# state["na_potezu"] = 0
-# for el in mogucnosti(state):
-#     show_table(el)
